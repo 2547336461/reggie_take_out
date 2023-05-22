@@ -18,7 +18,7 @@ import java.sql.SQLIntegrityConstraintViolationException;
 @Slf4j
 public class GlobalExceptionHandler {
     /**
-     * 异常处理办法
+     * 自定义SQL语句异常处理办法
      *
      * @param ex
      * @return
@@ -27,12 +27,24 @@ public class GlobalExceptionHandler {
     public R<String> exceptionHandler(SQLIntegrityConstraintViolationException ex) {
         log.error(ex.getMessage());
 
-        if (ex.getMessage().contains("Duplicate entry")){
+        if (ex.getMessage().contains("Duplicate entry")) {
             String[] s = ex.getMessage().split(" ");
             String msg = s[2] + "已存在";
             return R.error(msg);
         }
-
         return R.error("未知错误");
+    }
+
+    /**
+     * 自定义菜单和菜品删除异常处理办法
+     *
+     * @param ex
+     * @return
+     */
+    @ExceptionHandler({CustomException.class})
+    public R<String> exceptionHandler(CustomException ex) {
+        log.error(ex.getMessage());
+
+        return R.error(ex.getMessage());
     }
 }

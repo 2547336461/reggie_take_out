@@ -93,11 +93,12 @@ public class DishController {
 
     /**
      * 根据id查询菜品信息和口味信息
+     *
      * @param id
      * @return
      */
     @GetMapping("/{id}")
-    public R<DishDto> get(@PathVariable Long id){
+    public R<DishDto> get(@PathVariable Long id) {
         DishDto dishDto = dishService.getByIdWithFlavor(id);
         return R.success(dishDto);
     }
@@ -113,5 +114,33 @@ public class DishController {
         log.info(dishDto.toString());
         dishService.updateWithFlavor(dishDto);
         return R.success("修改菜品成功！");
+    }
+
+    /**
+     * 根据ids更改菜品状态
+     *
+     * @param status
+     * @param ids
+     * @return
+     */
+    @PostMapping("/status/{status}")
+    public R<String> updateStatusById(@PathVariable Integer status, Long[] ids) {
+        log.info("将要更改菜品状态的id个数为：{}", ids.length);
+        for (int i = 0; i < ids.length; i++) {
+            Dish dish = dishService.getById(ids[i]);
+            dish.setStatus(status);
+            dishService.updateById(dish);
+        }
+        return R.success("状态修改成功！");
+    }
+
+    @DeleteMapping
+    public R<String> deleteDishById(Long[] ids) {
+        log.info("将要删除的ids为{}",ids);
+        for (int i = 0; i < ids.length; i++) {
+            dishService.removeById(ids[i]);
+        }
+        return R.success("删除成功");
+
     }
 }

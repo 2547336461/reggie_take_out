@@ -2,10 +2,12 @@ package com.itheima.reggie.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.itheima.reggie.common.CustomException;
 import com.itheima.reggie.common.R;
 import com.itheima.reggie.dto.DishDto;
 import com.itheima.reggie.entity.Category;
 import com.itheima.reggie.entity.Dish;
+import com.itheima.reggie.entity.DishFlavor;
 import com.itheima.reggie.service.CategoryService;
 import com.itheima.reggie.service.DishFlavorService;
 import com.itheima.reggie.service.DishService;
@@ -124,12 +126,17 @@ public class DishController {
      * @return
      */
     @PostMapping("/status/{status}")
-    public R<String> updateStatusById(@PathVariable Integer status, Long[] ids) {
-        log.info("将要更改菜品状态的id个数为：{}", ids.length);
-        for (int i = 0; i < ids.length; i++) {
-            Dish dish = dishService.getById(ids[i]);
-            dish.setStatus(status);
-            dishService.updateById(dish);
+    public R<String> updateStatusById(@PathVariable Integer status,@RequestParam List<Long> ids) {
+        log.info("将要更改菜品状态的id个数为：{}", ids);
+        LambdaQueryWrapper<Dish> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.in(ids!= null,Dish::getId,ids);
+        List<Dish> list = dishService.list(lambdaQueryWrapper);
+        for (Dish dish : list) {
+            if (dish != null){
+                dish.setStatus(status);
+                dishService.updateById(dish);
+            }
+
         }
         return R.success("状态修改成功！");
     }
@@ -141,12 +148,28 @@ public class DishController {
      * @return
      */
     @DeleteMapping
-    public R<String> deleteDishById(Long[] ids) {
-        log.info("将要删除的ids为{}", ids);
-        for (int i = 0; i < ids.length; i++) {
-            dishService.removeById(ids[i]);
+    public R<String> deleteDishById(@RequestParam List<Long> ids) {
+        // 查菜品的状态，是否可以删除（）
+        LambdaQueryWrapper<Dish> dishQueryWrapper = new LambdaQueryWrapper<>();
+        dishQueryWrapper.in(Dish::getId, ids);
+        dishQueryWrapper.eq(Dish::getStatus, 1);
+
+        int count = dishService.count(dishQueryWrapper);
+        if(count > 0) {
+            throw new CustomException("菜品正在售卖中！不能删除！");
         }
-        return R.success("删除成功");
+
+        // 删除dish
+        dishService.removeByIds(ids);
+
+        // 删除dish_flavor
+        LambdaQueryWrapper<DishFlavor> dfQueryWrapper = new LambdaQueryWrapper<>();
+        dfQueryWrapper.in(DishFlavor::getDishId, ids);
+
+        dishFlavorService.remove(dfQueryWrapper);
+        return R.success("删除菜品成功！");
+
+
 
     }
 

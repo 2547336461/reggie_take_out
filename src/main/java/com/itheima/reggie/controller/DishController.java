@@ -134,13 +134,37 @@ public class DishController {
         return R.success("状态修改成功！");
     }
 
+    /**
+     * 根据ids删除菜品
+     *
+     * @param ids
+     * @return
+     */
     @DeleteMapping
     public R<String> deleteDishById(Long[] ids) {
-        log.info("将要删除的ids为{}",ids);
+        log.info("将要删除的ids为{}", ids);
         for (int i = 0; i < ids.length; i++) {
             dishService.removeById(ids[i]);
         }
         return R.success("删除成功");
 
+    }
+
+    /**
+     * 根据条件查询对应的菜品数据
+     * @param dish
+     * @return
+     */
+    @GetMapping("/list")
+    public R<List<Dish>> list(Dish dish) {
+        // 构造查询条件
+        LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper();
+        queryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
+        // 添加条件 查询状态为1的数据(起售)
+        queryWrapper.eq(Dish::getStatus,1);
+        // 排序条件
+        queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
+        List<Dish> list = dishService.list(queryWrapper);
+        return R.success(list);
     }
 }

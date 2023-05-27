@@ -1,6 +1,8 @@
 package com.itheima.reggie.common;
 
 import lombok.Data;
+
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,7 +11,8 @@ import java.util.Map;
  * @param <T>
  */
 @Data
-public class R<T> {
+// 实现序列化接口可以让R类型的数据存入redis中，否则R类型的数据不可以存储在redis中
+public class R<T> implements Serializable {
 
     private Integer code; //编码：1成功，0和其它数字为失败
 
